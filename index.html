@@ -43,7 +43,11 @@
         ];
         
         const dates = ["6/7", "13/7", "20/7", "27/7", "3/8", "10/8", "17/8", "24/8", "31/8", "7/9", "14/9", "21/9"];
-        let currentSession = parseInt(localStorage.getItem('currentSession') || "1");
+        
+        // مسح أي بيانات سابقة من ذاكرة المتصفح قبل البدء
+        localStorage.clear();
+        
+        let currentSession = 1;
         document.getElementById('sessionDisplay').innerText = currentSession;
 
         const headerRow = document.getElementById('headerRow');
@@ -54,9 +58,8 @@
         students.forEach(student => {
             let row = `<tr><td>${student.id}</td><td style="text-align:right">${student.name}</td>`;
             for (let s = 1; s <= 12; s++) {
-                let saved = localStorage.getItem(`check-${student.id}-${s}`) === 'true';
                 let disabled = (s != currentSession) ? 'disabled' : '';
-                row += `<td><input type="checkbox" id="check-${student.id}-${s}" ${saved ? 'checked' : ''} ${disabled}></td>`;
+                row += `<td><input type="checkbox" id="check-${student.id}-${s}" ${disabled}></td>`;
             }
             row += `<td id="percent-${student.id}">-</td></tr>`;
             tbody.innerHTML += row;
@@ -69,14 +72,12 @@
                 if (!match) return;
                 const scannedId = parseInt(match[0]);
                 const cb = document.getElementById(`check-${scannedId}-${currentSession}`);
-
                 if (cb) {
                     cb.checked = true;
-                    localStorage.setItem(`check-${scannedId}-${currentSession}`, 'true');
-                    alert("✅ تم تسجيل حضور الطالب رقم: " + scannedId);
+                    alert("✅ تم تسجيل حضور الطالب: " + scannedId);
                     scanner.clear();
                 } else {
-                    alert("❌ خطأ: الطالب رقم " + scannedId + " غير متاح في الجلسة الحالية.");
+                    alert("❌ خطأ: الطالب رقم " + scannedId + " غير متاح أو لا يوجد في هذه الجلسة.");
                     scanner.clear();
                 }
             });
@@ -86,16 +87,15 @@
             if (currentSession > 12) { alert("انتهت الدورة!"); return; }
             document.querySelectorAll(`input[id$="-${currentSession}"]`).forEach(cb => cb.disabled = true);
             currentSession++;
-            localStorage.setItem('currentSession', currentSession);
             document.getElementById('sessionDisplay').innerText = currentSession;
             document.querySelectorAll(`input[id$="-${currentSession}"]`).forEach(cb => cb.disabled = false);
-            alert("تم حفظ الحضور وقفل الجلسة بنجاح!");
+            alert("تم حفظ الجلسة والانتقال للجلسة القادمة!");
         }
 
         function calculatePercents() {
             for (let i = 1; i <= students.length; i++) {
                 let attended = 0;
-                for (let s = 1; s <= 12; s++) if (localStorage.getItem(`check-${i}-${s}`) === 'true') attended++;
+                for (let s = 1; s <= 12; s++) if (document.getElementById(`check-${i}-${s}`)?.checked) attended++;
                 let percent = (attended / (currentSession - 1 || 1)) * 100;
                 let cell = document.getElementById(`percent-${i}`);
                 cell.innerText = percent.toFixed(0) + "%";
@@ -105,7 +105,7 @@
 
         function exportToExcel() {
             const wb = XLSX.utils.table_to_book(document.getElementById("attendanceTable"));
-            XLSX.writeFile(wb, "سجل_حضور_التجويد.xlsx");
+            XLSX.writeFile(wb, "سجل_حضور_دورة_التجويد.xlsx");
         }
     </script>
 </body>

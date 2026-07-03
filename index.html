@@ -37,7 +37,7 @@
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
-        const studentNames = ["سمير منافخي", "الشيخ أبوعمر", "شادي خلف", "محمد عطية", "مجد روغوظ", "عبد اللطيف حافظ", "طارق آغا", "معاذ حميدو", "علي ابراهيم", "سامر فياض", "حسن عبد النبي", "عامر ابراهيم", "خير الدين خلوف", "محمد علي محيي الدين", "أبوعمار الحمصي", "صفوان سهيل محمد", "نادر اسماعيل طاش", "ياسين محمد غنوم", "وليد علي مطر", "محمد خير المسعود", "محمد خالد اليوسفي", "محي الدين وائلي", "مصطفى وجود", "أيمن صالح مطر", "جاسم صلان", "محمد ضامن", "وسام اسماعيل جاموس", "عادل الحمد", "عدنان الحمود", "محي ابراهيم", "حسين حنبا", "محمد الخطيب", "سعد دايات", "ابراهيم شقير", "ملهم أبوخلف", "محمد خالد طويلة", "عبد الرحمن محي الدين", "عبادة محي الدين", "زين الدين عرقور", "عبد الرحمن بلعوط", "أيهم مصطفى", "محمد العزاوي", "سعود ملا عبدالله", "أسامة العبيد", "محمد مازن عوض", "براء عليكو", "حسن ازفسلي", "كنان جمعة", "محمد الهيبشي", "إحسان سوف", "محمد الإبراهيم", "حسين عيد", "علي عمرو", "محمد مراد", "طارق مراد"];
+        const studentNames = ["سمير منافخي", "الشيخ أبوعمر", "شادي خلف", "محمد عطية", "مجد روغوظ", "عبد اللطيف حافظ", "طارق آغا", "معاذ حميدو", "علي ابراهيم", "سامر فياض", "حسن عبد البني", "عامر ابراهيم", "خير الدين خلوف", "محمد علي محيي الدين", "أبوعمار الحمصي", "صفوان سهيل محمد", "نادر اسماعيل طاش", "ياسين محمد غنوم", "وليد علي مطر", "محمد خير المسعود", "محمد خالد اليوسفي", "محي الدين وائلي", "مصطفى وجود", "أيمن صالح مطر", "جاسم صلان", "محمد ضامن", "وسام اسماعيل جاموس", "عادل الحمد", "عدنان الحمود", "محي ابراهيم", "حسين حنبا", "محمد الخطيب", "سعد دايات", "ابراهيم شقير", "ملهم أبوخلف", "محمد خالد طويلة", "عبد الرحمن محي الدين", "عبادة محي الدين", "زين الدين عرقور", "عبد الرحمن بلعوط", "أيهم مصطفى", "محمد العزاوي", "سعود ملا عبدالله", "أسامة العبيد", "محمد مازن عوض", "براء عليكو", "حسن ازفسلي", "كنان جمعة", "محمد الهيبشي", "إحسان سوف", "محمد الإبراهيم", "حسين عيد", "علي عمرو", "محمد مراد"];
         
         let currentSession = parseInt(localStorage.getItem('currentSession') || "1");
         document.getElementById('sessionDisplay').innerText = currentSession;
@@ -55,8 +55,18 @@
         function startScanner() {
             const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 });
             scanner.render((text) => {
-                const cb = document.getElementById(`check-${text}-${currentSession}`);
-                if (cb) { cb.checked = true; alert("تم تسجيل الطالب: " + studentNames[text-1]); scanner.clear(); }
+                // التعديل هنا: استخراج الرقم فقط من أي نص يحتوي على أرقام
+                const match = text.match(/(\d+)/);
+                const studentId = match ? match[0] : null;
+
+                const cb = document.getElementById(`check-${studentId}-${currentSession}`);
+                if (cb) { 
+                    cb.checked = true; 
+                    alert("تم تسجيل الطالب: " + studentNames[studentId - 1]); 
+                    scanner.clear(); 
+                } else {
+                    alert("تعذر العثور على طالب بالرقم: " + studentId);
+                }
             });
         }
 
@@ -69,10 +79,11 @@
         }
 
         function calculateAndColor() {
+            let divisor = (currentSession > 1) ? (currentSession - 1) : 1;
             for (let i = 1; i <= studentNames.length; i++) {
                 let attended = 0;
-                for (let s = 1; s <= 12; s++) if (document.getElementById(`check-${i}-${s}`).checked) attended++;
-                let percent = (attended / (currentSession - 1 || 1)) * 100;
+                for (let s = 1; s <= 12; s++) if (document.getElementById(`check-${i}-${s}`)?.checked) attended++;
+                let percent = (attended / divisor) * 100;
                 let cell = document.getElementById(`percent-${i}`);
                 cell.innerText = percent.toFixed(0) + "%";
                 cell.className = (percent >= 75) ? "high" : "low";

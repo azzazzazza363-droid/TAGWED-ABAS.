@@ -7,16 +7,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; background-color: #f4f4f4; padding: 10px; }
-        .btn { width: 100%; padding: 20px; margin: 5px 0; color: white; border: none; font-size: 20px; cursor: pointer; border-radius: 10px; font-weight: bold; }
+        .btn { width: 100%; padding: 15px; margin: 5px 0; color: white; border: none; font-size: 18px; cursor: pointer; border-radius: 8px; font-weight: bold; }
         .btn-green { background-color: #28a745; }
         .btn-blue { background-color: #007bff; }
         .btn-purple { background-color: #6f42c1; }
         .btn-orange { background-color: #fd7e14; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; background: white; font-size: 14px; }
+        th, td { border: 1px solid #999; padding: 8px; text-align: center; }
         thead { background-color: #343a40; color: white; }
-        .high { background-color: #7cfc00 !important; }
-        .low { background-color: #ff6347 !important; }
+        .high { background-color: #7cfc00 !important; font-weight: bold; }
+        .low { background-color: #ff6347 !important; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -25,14 +25,14 @@
 
     <button class="btn btn-green" onclick="startScanner()">📷 مسح الباركود</button>
     <button class="btn btn-blue" onclick="saveAndLock()">💾 حفظ الحضور وقفل الخانة</button>
-    <button class="btn btn-orange" onclick="exportToExcel()">📊 تصدير إلى Excel</button>
-    <button class="btn btn-purple" onclick="calculatePercents()">📈 حساب النسب المئوية</button>
+    <button class="btn btn-orange" onclick="exportToExcel()">📊 تصدير Excel</button>
+    <button class="btn btn-purple" onclick="calculatePercents()">📈 النسبة المئوية</button>
 
     <div id="reader" style="width: 100%; max-width: 400px; margin: auto;"></div>
 
     <table id="attendanceTable">
         <thead>
-            <tr id="headerRow"><th>الرقم</th><th>الاسم</th></tr>
+            <tr id="headerRow"><th>الرقم</th><th>اسم الطالب</th></tr>
         </thead>
         <tbody id="studentBody"></tbody>
     </table>
@@ -40,21 +40,22 @@
     <script>
         const studentNames = ["سمير منافخي", "الشيخ أبوعمر", "شادي خلف", "محمد عطية", "مجد روغوظ", "عبد اللطيف حافظ", "طارق آغا", "معاذ حميدو", "علي ابراهيم", "سامر فياض", "حسن عبد البني", "عامر ابراهيم", "خير الدين خلوف", "محمد علي محيي الدين", "أبوعمار الحمصي", "صفوان سهيل محمد", "نادر اسماعيل طاش", "ياسين محمد غنوم", "وليد علي مطر", "محمد خير المسعود", "محمد خالد اليوسفي", "محي الدين وائلي", "مصطفى وجود", "أيمن صالح مطر", "جاسم صلان", "محمد ضامن", "وسام اسماعيل جاموس", "عادل الحمد", "عدنان الحمود", "محي ابراهيم", "حسين حنبا", "محمد الخطيب", "سعد دايات", "ابراهيم شقير", "ملهم أبوخلف", "محمد خالد طويلة", "عبد الرحمن محي الدين", "عبادة محي الدين", "زين الدين عرقور", "عبد الرحمن بلعوط", "أيهم مصطفى", "محمد العزاوي", "سعود ملا عبدالله", "أسامة العبيد", "محمد مازن عوض", "براء عليكو", "حسن ازفسلي", "كنان جمعة", "محمد الهيبشي", "إحسان سوف", "محمد الإبراهيم", "حسين عيد", "علي عمرو", "محمد مراد"];
         
-        const totalSessions = 12;
+        const dates = ["6/7", "13/7", "20/7", "27/7", "3/8", "10/8", "17/8", "24/8", "31/8", "7/9", "14/9", "21/9"];
         let currentSession = parseInt(localStorage.getItem('currentSession') || "1");
         document.getElementById('sessionDisplay').innerText = currentSession;
 
-        // تهيئة الجدول
+        // بناء رؤوس الجدول بالتواريخ
         const headerRow = document.getElementById('headerRow');
-        for (let s = 1; s <= totalSessions; s++) headerRow.innerHTML += `<th>ج${s}</th>`;
+        dates.forEach(d => headerRow.innerHTML += `<th>${d}</th>`);
         headerRow.innerHTML += `<th>النسبة</th>`;
 
+        // بناء الصفوف
         const tbody = document.getElementById('studentBody');
         for (let i = 0; i < studentNames.length; i++) {
             let row = `<tr><td>${i + 1}</td><td style="text-align:right">${studentNames[i]}</td>`;
-            for (let s = 1; s <= totalSessions; s++) {
+            for (let s = 1; s <= 12; s++) {
                 let saved = localStorage.getItem(`check-${i+1}-${s}`) === 'true';
-                let disabled = (s < currentSession) ? 'disabled' : (s > currentSession ? 'disabled' : '');
+                let disabled = (s != currentSession) ? 'disabled' : '';
                 row += `<td><input type="checkbox" id="check-${i+1}-${s}" ${saved ? 'checked' : ''} ${disabled}></td>`;
             }
             row += `<td id="percent-${i+1}">-</td></tr>`;
@@ -65,33 +66,36 @@
             const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 });
             scanner.render((text) => {
                 const match = text.match(/(\d+)/);
-                const studentId = match ? match[0] : null;
+                if (!match) return;
+                const studentId = parseInt(match[0]); // هذا هو الرقم الذي يطابق معرف الطالب
+
                 const cb = document.getElementById(`check-${studentId}-${currentSession}`);
                 if (cb) {
                     cb.checked = true;
                     localStorage.setItem(`check-${studentId}-${currentSession}`, 'true');
-                    alert("تم تسجيل: " + studentNames[studentId - 1]);
+                    alert("✅ تم تسجيل حضور الطالب رقم: " + studentId);
                     scanner.clear();
                 } else {
-                    alert("رقم غير صالح أو طالب غير موجود!");
+                    alert("❌ خطأ: الطالب رقم " + studentId + " غير موجود أو غير مفعل في هذه الجلسة!");
+                    scanner.clear();
                 }
             });
         }
 
         function saveAndLock() {
-            if (currentSession > totalSessions) return;
+            if (currentSession > 12) { alert("انتهت الدورة!"); return; }
             document.querySelectorAll(`input[id$="-${currentSession}"]`).forEach(cb => cb.disabled = true);
             currentSession++;
             localStorage.setItem('currentSession', currentSession);
             document.getElementById('sessionDisplay').innerText = currentSession;
             document.querySelectorAll(`input[id$="-${currentSession}"]`).forEach(cb => cb.disabled = false);
-            alert("تم حفظ الجلسة وقفلها بنجاح!");
+            alert("تم حفظ الجلسة والانتقال للجلسة القادمة!");
         }
 
         function calculatePercents() {
             for (let i = 1; i <= studentNames.length; i++) {
                 let attended = 0;
-                for (let s = 1; s <= totalSessions; s++) if (localStorage.getItem(`check-${i}-${s}`) === 'true') attended++;
+                for (let s = 1; s <= 12; s++) if (localStorage.getItem(`check-${i}-${s}`) === 'true') attended++;
                 let percent = (attended / (currentSession - 1 || 1)) * 100;
                 let cell = document.getElementById(`percent-${i}`);
                 cell.innerText = percent.toFixed(0) + "%";
@@ -100,9 +104,8 @@
         }
 
         function exportToExcel() {
-            const table = document.getElementById("attendanceTable");
-            const wb = XLSX.utils.table_to_book(table);
-            XLSX.writeFile(wb, "سجل_الحضور.xlsx");
+            const wb = XLSX.utils.table_to_book(document.getElementById("attendanceTable"));
+            XLSX.writeFile(wb, "سجل_حضور_التجويد.xlsx");
         }
     </script>
 </body>

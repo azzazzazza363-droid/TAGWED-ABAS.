@@ -44,9 +44,7 @@
         
         const dates = ["6/7", "13/7", "20/7", "27/7", "3/8", "10/8", "17/8", "24/8", "31/8", "7/9", "14/9", "21/9"];
         
-        // مسح أي بيانات سابقة من ذاكرة المتصفح قبل البدء
         localStorage.clear();
-        
         let currentSession = 1;
         document.getElementById('sessionDisplay').innerText = currentSession;
 
@@ -74,10 +72,10 @@
                 const cb = document.getElementById(`check-${scannedId}-${currentSession}`);
                 if (cb) {
                     cb.checked = true;
-                    alert("✅ تم تسجيل حضور الطالب: " + scannedId);
+                    alert("✅ تم تسجيل حضور الطالب رقم: " + scannedId);
                     scanner.clear();
                 } else {
-                    alert("❌ خطأ: الطالب رقم " + scannedId + " غير متاح أو لا يوجد في هذه الجلسة.");
+                    alert("❌ خطأ: الطالب رقم " + scannedId + " غير موجود أو غير مفعل في هذه الجلسة.");
                     scanner.clear();
                 }
             });

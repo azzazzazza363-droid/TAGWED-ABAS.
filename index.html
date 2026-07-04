@@ -44,6 +44,14 @@
         const dates = ["29/6", "6/7", "13/7", "20/7", "27/7", "3/8", "10/8", "17/8", "24/8", "31/8", "7/9", "14/9", "21/9", "28/9", "5/10", "12/10", "19/10"];
         
         // localStorage.clear();
+        function loadAttendance() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const savedState = localStorage.getItem(cb.id);
+        if (savedState !== null) {
+            cb.checked = (savedState === 'true');
+        }
+    });
+}
         let currentSession = 1;
         document.getElementById('sessionDisplay').innerText = currentSession;
 
@@ -56,11 +64,12 @@
             let row = `<tr><td>${student.id}</td><td style="text-align:right">${student.name}</td>`;
             for (let s = 1; s <= 17; s++) {
                 let disabled = (s != currentSession) ? 'disabled' : '';
-                row += `<td><input type="checkbox" id="check-${student.id}-${s}" ${disabled}></td>`;
+                row += `<td><input type="checkbox" id="check-${student.id}-${s}" ${disabled} onchange="localStorage.setItem(this.id, this.checked)"></td>`;
             }
             row += `<td id="percent-${student.id}">-</td></tr>`;
             tbody.innerHTML += row;
         });
+        loadAttendance();
 
         function startScanner() {
             const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 });
